@@ -18,13 +18,13 @@ function identifyChords(midiNotes) {
     if(!rootPresent && !(seventh||maj7))continue;
     let consumed=new Set([0]);
     let suffix="",label="",score=0;
-    if(major){consumed.add(4);suffix="";label="majeur";score+=15}
-    else if(minor){consumed.add(3);suffix="m";label="mineur";score+=15}
-    else if(sus4){consumed.add(5);suffix="sus4";label="suspendu 4";score+=9}
-    else {consumed.add(2);suffix="sus2";label="suspendu 2";score+=9}
+    if(major){consumed.add(4);suffix="";label="majeur";score+=18}
+    else if(minor){consumed.add(3);suffix="m";label="mineur";score+=18}
+    else if(sus4){consumed.add(5);suffix="sus4";label="suspendu 4";score+=5}
+    else {consumed.add(2);suffix="sus2";label="suspendu 2";score+=5}
     if(fifth){consumed.add(7);score+=4}
     else if(dim5){consumed.add(6);suffix=minor?"dim":suffix+"♭5";label=minor?"diminué":label+" quinte diminuée";score+=3}
-    else if(aug5){consumed.add(8);suffix=major?"aug":suffix+"♯5";label=major?"augmenté":label+" quinte augmentée";score+=2}
+    else if(aug5){consumed.add(8);suffix=major?"aug":suffix+"♯5";label=major?"augmenté":label+" quinte augmentée";score-=30}
     // La septième diminuée est enharmoniquement équivalente à la sixte.
     if(minor&&dim5&&has(9)&&!seventh&&!maj7){consumed.add(9);suffix="dim7";label="septième diminuée";score+=10}
     else if(seventh||maj7){
@@ -57,7 +57,7 @@ function identifyChords(midiNotes) {
         else if(major&&maj7)suffix="maj"+highest;
         else if(minor&&maj7)suffix="m(maj7)("+highest+")";
         else suffix+="("+highest+")";
-        ext.splice(ext.indexOf(highest),1);
+        for(const n of natural)ext.splice(ext.indexOf(n),1);
       }
       if(ext.length)suffix+="("+ext.join(",")+")";
     }else{
@@ -72,12 +72,15 @@ function identifyChords(midiNotes) {
     if(unexplained.length)continue; // Ne pas inventer une analyse pour les notes inexpliquées.
     if(!rootPresent) suffix+="(sans fondamentale)";
     const name=LETTERS[root]+suffix+(bass!==root?"/"+LETTERS[bass]:"");
-    score+=(rootPresent?35:-16)+(bass===root?14:0);
+    score+=(rootPresent?35:-25)+(bass===root?30:0);
     score+=has7?7:0;
     score-=Math.max(0,ext.length-1)*2;
-    if(!rootPresent)score-=10;
+    if(!rootPresent)score-=15;
     if(!fifth&&!dim5&&!aug5)score-=2;
-    if(suffix.includes("add")||suffix.includes("("))score-=1;
+    if(suffix.includes("add"))score-=8;
+    if(suffix.includes("♯5"))score-=10;
+    if(!has7 && suffix.includes("11"))score-=8;
+    if(suffix.includes("("))score-=1;
     results.push({name,label,root,bass,score,notes:notes.length});
   }
   return results.sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
